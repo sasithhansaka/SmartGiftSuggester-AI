@@ -1,3 +1,52 @@
+import os
+import json
+from fastapi import FastAPI
+from pydantic import BaseModel
+from dotenv import load_dotenv
+from openai import OpenAI
+from motor.motor_asyncio import AsyncIOMotorClient
+from typing import List
+from fastapi.middleware.cors import CORSMiddleware  # Add this import at the top
+from typing import Optional
+# import json
+
+
+# Load environment variables
+load_dotenv()
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+SITE_URL = os.getenv("SITE_URL")
+SITE_NAME = os.getenv("SITE_NAME")
+MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+DB_NAME = os.getenv("MONGO_DB_NAME", "tradnet")
+COLLECTION_NAME = os.getenv("MONGO_COLLECTION_NAME", "products")
+
+if not OPENAI_API_KEY:
+    raise EnvironmentError("OPENAI_API_KEY environment variable not set!")
+
+# Initialize OpenAI client (new SDK format)
+client = OpenAI(api_key=OPENAI_API_KEY)
+
+# Allowed categories
+ALLOWED_CATEGORIES = {"sports", "gaming", "mobilephones", "laptops", "earphones", "toys"}
+
+# FastAPI app
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",    # Default React development server
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allows all headers
+    expose_headers=["*"]  # Exposes all headers to the client
+)
+
+# MongoDB client
+mongo_client = AsyncIOMotorClient(MONGODB_URI)
+db = mongo_client[DB_NAME]
+products_collection = db[COLLECTION_NAME]
 
 class GiftStoryRequest(BaseModel):
     story: str
